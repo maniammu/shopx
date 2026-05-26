@@ -1,0 +1,283 @@
+Got it! Let's drop Django entirely and convert everything into a clean, flat, static layout.
+
+Since you want to handle this quickly, I have combined all the pages—**Home Catalog, Inventory Manager (with Delete simulation), Add Product Form, Shopping Cart, and About**—into a single, highly interactive HTML file. You can swap between pages instantly using the navigation links without needing a backend server at all.
+
+Save the code below as `index.html` and open it directly in VS Code or your browser!
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopX | Premium Commerce Experience</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary: #10b981;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-radius: 16px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--light); color: var(--text-main); }
+
+        /* NAVIGATION BAR */
+        nav { background: #111827; padding: 18px 8%; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .logo { color: white; font-size: 26px; font-weight: 800; cursor: pointer; }
+        .logo span { color: var(--secondary); }
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-links a { color: #94a3b8; text-decoration: none; font-size: 15px; font-weight: 500; transition: var(--transition); cursor: pointer; }
+        .nav-links a:hover, .nav-links a.active { color: white; }
+
+        /* HERO ELEMENT */
+        .hero { height: 400px; background: linear-gradient(rgba(15,23,42,0.65), rgba(15,23,42,0.65)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200') center/cover; display: flex; justify-content: center; align-items: center; }
+        .hero-content { text-align: center; color: white; padding: 0 20px; }
+        .hero h1 { font-size: 48px; font-weight: 800; }
+        .hero p { font-size: 18px; margin: 12px 0 24px; color: #cbd5e1; }
+        .hero button { padding: 12px 32px; border: none; background: var(--secondary); color: var(--dark); font-weight: 600; border-radius: 30px; cursor: pointer; transition: var(--transition); }
+        .hero button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* STRUCTURAL VIEWS CONTROLLER */
+        .page-view { display: none; min-height: 80vh; padding-bottom: 60px; }
+        .page-view.active-view { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+        .section-header { width: 84%; margin: 50px auto 25px; }
+        .title { font-size: 28px; font-weight: 800; }
+
+        /* PRODUCT GRIDS */
+        .products { width: 84%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+        .card { background: white; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid #e2e8f0; transition: var(--transition); display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.08); }
+        .img-container { height: 240px; position: relative; background: #f1f5f9; }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .badge { position: absolute; top: 12px; left: 12px; background: var(--dark); color: white; padding: 4px 10px; font-size: 11px; font-weight: 700; border-radius: 20px; text-transform: uppercase; }
+        .admin-badge { background: #dc2626; }
+
+        .card-content { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+        .type { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+        .card-content h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--dark); }
+        .rating { color: #f59e0b; font-size: 12px; margin-bottom: 15px; }
+        .rating span { color: var(--text-muted); }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+        .price { font-size: 20px; font-weight: 800; color: var(--dark); }
+
+        /* BUTTON ACTIONS */
+        .buy-btn { padding: 8px 18px; border: none; background: var(--primary); color: white; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .buy-btn:hover { background: var(--primary-hover); }
+        .delete-btn { padding: 8px 16px; border: 1px solid #fee2e2; background: #fef2f2; color: #dc2626; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .delete-btn:hover { background: #dc2626; color: white; }
+
+        /* WEB FORMS */
+        .form-container { width: 440px; background: white; margin: 60px auto; padding: 35px; border-radius: var(--border-radius); box-shadow: var(--shadow); border: 1px solid #e2e8f0; }
+        .form-container h1 { font-size: 24px; text-align: center; margin-bottom: 24px; font-weight: 800; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .form-container input { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; }
+        .form-container input:focus { border-color: var(--primary); background: white; }
+        .form-container button { width: 100%; padding: 12px; margin-top: 10px; border: none; background: var(--primary); color: white; font-weight: 600; border-radius: 8px; cursor: pointer; }
+
+        /* CART FLEX SPLITS */
+        .cart-wrapper { width: 84%; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .cart-items-panel, .cart-summary-panel { background: white; border-radius: var(--border-radius); padding: 25px; box-shadow: var(--shadow); border: 1px solid #e2e8f0; }
+        .cart-item-row { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+        .cart-item-info { display: flex; align-items: center; gap: 15px; }
+        .cart-item-info img { width: 65px; height: 65px; object-fit: cover; border-radius: 8px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .summary-total { border-top: 2px dashed #e2e8f0; padding-top: 12px; margin-top: 12px; font-size: 18px; font-weight: 800; }
+
+        /* ABOUT */
+        .about { width: 600px; margin: 80px auto; background: white; padding: 40px; border-radius: var(--border-radius); box-shadow: var(--shadow); text-align: center; border: 1px solid #e2e8f0; }
+        .about h1 { margin-bottom: 15px; font-size: 32px; font-weight: 800; }
+        .about p { color: var(--text-muted); line-height: 1.6; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @media(max-width: 768px) { .nav-links { display: none; } .cart-wrapper { grid-template-columns: 1fr; } .form-container, .about { width: 90%; } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo" onclick="switchPage('home')">Shop<span>X</span></div>
+        <div class="nav-links">
+            <a id="nav-home" onclick="switchPage('home')" class="active">Home</a>
+            <a id="nav-inventory" onclick="switchPage('inventory')">Inventory</a>
+            <a id="nav-add_product" onclick="switchPage('add_product')">Add Product</a>
+            <a id="nav-about" onclick="switchPage('about')">About</a>
+            <a id="nav-cart" onclick="switchPage('cart')">Cart 🛒</a>
+        </div>
+    </nav>
+
+    <div id="view-home" class="page-view active-view">
+        <div class="hero">
+            <div class="hero-content">
+                <h1>Premium Shopping Store</h1>
+                <p>Explore Amazing Products Curated for Modern Standards.</p>
+                <button onclick="document.getElementById('catalog-header').scrollIntoView({behavior: 'smooth'})">Shop Now</button>
+            </div>
+        </div>
+        <div id="catalog-header" class="section-header"><h1 class="title">Featured Products</h1></div>
+        <div class="products" id="catalog-grid"></div>
+    </div>
+
+    <div id="view-inventory" class="page-view">
+        <div class="section-header"><h1 class="title">Inventory Management Dashboard</h1></div>
+        <div class="products" id="inventory-grid"></div>
+    </div>
+
+    <div id="view-add_product" class="page-view">
+        <div class="form-container">
+            <h1>Add New Product</h1>
+            <form id="productForm" onsubmit="createNewProduct(event)">
+                <div class="form-group"><label>Product Title</label><input type="text" id="formName" required placeholder="Smartwatch Series 7"></div>
+                <div class="form-group"><label>Price Tag (INR)</label><input type="number" id="formPrice" required placeholder="3499"></div>
+                <div class="form-group"><label>Category Tag</label><input type="text" id="formType" required placeholder="Wearables"></div>
+                <div class="form-group"><label>Image Asset Remote Link</label><input type="url" id="formImage" required placeholder="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500"></div>
+                <button type="submit">Publish Listing</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-cart" class="page-view">
+        <div class="section-header"><h1 class="title">Your Shopping Bag</h1></div>
+        <div class="cart-wrapper">
+            <div class="cart-items-panel" id="cart-container">
+                <div class="cart-item-row">
+                    <div class="cart-item-info">
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150" alt="Item Preview">
+                        <div>
+                            <h3>Premium Electronic Framework</h3>
+                            <p style="color: gray; font-size:13px;">Class: Hardware</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 30px;">
+                        <span style="font-weight:700; font-size:18px;">₹4,999</span>
+                        <button class="delete-btn" style="padding:6px 12px;" onclick="this.closest('.cart-item-row').remove()">Delete</button>
+                    </div>
+                </div>
+            </div>
+            <div class="cart-summary-panel">
+                <h3 style="margin-bottom:20px; font-weight:800;">Order Valuation</h3>
+                <div class="summary-row"><span>Basket Subtotal</span><strong>₹4,999</strong></div>
+                <div class="summary-row"><span>Logistic Shipping</span><strong style="color:var(--secondary)">FREE</strong></div>
+                <div class="summary-row summary-total"><span>Total Cost</span><span>₹4,999</span></div>
+                <button class="buy-btn" style="width:100%; padding:14px; margin-top:20px; border-radius:10px;" onclick="alert('Order Processed Successfully!')">Proceed to Gateway</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-about" class="page-view">
+        <div class="about">
+            <h1>About Our Store</h1>
+            <p>ShopX leverages micro-interactions linked with responsive CSS layout grids. This architecture delivers flawless standalone engine rendering across desktop and mobile browsers alike.</p>
+        </div>
+    </div>
+
+    <script>
+        // Default Mock Database
+        let databaseProducts = [
+            { id: 101, name: "Wireless Smartwatch Pro", price: "3,499", type: "Wearables", image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500" },
+            { id: 102, name: "Noise Cancelling Headphones", price: "5,999", type: "Audio", image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500" },
+            { id: 103, name: "Minimalist Leather Pack", price: "2,499", type: "Fashion", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500" }
+        ];
+
+        // Renders catalog grids dynamically on start
+        function updateUI() {
+            const catalog = document.getElementById('catalog-grid');
+            const inventory = document.getElementById('inventory-grid');
+            
+            catalog.innerHTML = '';
+            inventory.innerHTML = '';
+
+            if(databaseProducts.length === 0) {
+                catalog.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:gray; padding:40px;">No store inventory found.</p>`;
+                inventory.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:gray; padding:40px;">No store inventory found.</p>`;
+                return;
+            }
+
+            databaseProducts.forEach(product => {
+                // Home Card
+                catalog.innerHTML += `
+                    <div class="card">
+                        <div class="img-container">
+                            <span class="badge">New</span>
+                            <img src="${product.image}">
+                        </div>
+                        <div class="card-content">
+                            <div class="type">${product.type}</div>
+                            <h2>${product.name}</h2>
+                            <div class="rating">★★★★★ <span>(5.0)</span></div>
+                            <div class="card-footer">
+                                <div class="price">₹ ${product.price}</div>
+                                <button class="buy-btn" onclick="alert('Added ${product.name} to checkout bag!')">Buy Now</button>
+                            </div>
+                        </div>
+                    </div>`;
+
+                // Inventory Card with Real Interactive Delete 
+                inventory.innerHTML += `
+                    <div class="card" id="product-card-${product.id}">
+                        <div class="img-container">
+                            <span class="badge admin-badge">ID: ${product.id}</span>
+                            <img src="${product.image}">
+                        </div>
+                        <div class="card-content">
+                            <div class="type">${product.type}</div>
+                            <h2>${product.name}</h2>
+                            <div class="card-footer">
+                                <div class="price">₹ ${product.price}</div>
+                                <button class="delete-btn" onclick="deleteProduct(${product.id})">Remove</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // SPA Navigation Logic
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(view => view.classList.remove('active-view'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+            
+            document.getElementById(`view-${pageId}`).classList.add('active-view');
+            document.getElementById(`nav-${pageId}`).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // Add Product Form Action Handler
+        function createNewProduct(event) {
+            event.preventDefault();
+            const name = document.getElementById('formName').value;
+            const price = Number(document.getElementById('formPrice').value).toLocaleString('en-IN');
+            const type = document.getElementById('formType').value;
+            const image = document.getElementById('formImage').value;
+            const id = Math.floor(100 + Math.random() * 900);
+
+            databaseProducts.push({ id, name, price, type, image });
+            updateUI();
+            document.getElementById('productForm').reset();
+            switchPage('inventory'); // Instantly view layout dashboard upon submission
+        }
+
+        // Item Removal Handler
+        function deleteProduct(id) {
+            if(confirm("Permanently remove item entry from front-end memory?")) {
+                databaseProducts = databaseProducts.filter(item => item.id !== id);
+                updateUI();
+            }
+        }
+
+        // Initial Build Core Execute
+        updateUI();
+    </script>
+</body>
+</html>
+
+```
